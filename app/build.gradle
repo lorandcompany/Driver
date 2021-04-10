@@ -1,6 +1,10 @@
 plugins {
     id 'com.android.application'
+    id 'com.chrisney.enigma'
 }
+
+enigma.enabled = true
+enigma.injectFakeKeys = true
 
 android {
     compileSdkVersion 30
