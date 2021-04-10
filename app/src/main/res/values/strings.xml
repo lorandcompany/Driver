@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">Driver</string>
+    <string name="driveLinkRequirements">- The folder must be either your own or is shared to you.</string>
+    <string name="importDriveFolderTitle">Import a Google Drive folder</string>
+    <string name="importDriveFolderCaption">Add at least one Google Drive folder in order to have something to do inside the app, otherwise it will just be an empty void.</string>
+</resources>
