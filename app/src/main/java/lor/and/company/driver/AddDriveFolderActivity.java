@@ -1,18 +1,24 @@
 package lor.and.company.driver;
 
+import androidx.annotation.Keep;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.UriMatcher;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,23 +30,26 @@ import com.google.api.services.drive.model.FileList;
 import java.io.IOException;
 import java.util.List;
 
+
 import lor.and.company.driver.helpers.DBHelper;
 import lor.and.company.driver.helpers.DriveHelper;
 import lor.and.company.driver.adapters.PreviewRecyclerAdapter;
+
+import static lor.and.company.driver.SettingsActivity.RESTORE_BACKUP;
 
 public class AddDriveFolderActivity extends AppCompatActivity {
 
     ConstraintLayout previewLayout;
     TextInputEditText driveLink;
     DBHelper.CollectionsDB db;
-    boolean willAllowLandscape;
     Button importer;
+    Context context;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Context context = this;
+        context = this;
 
         db = new DBHelper.CollectionsDB(context);
 
@@ -51,12 +60,16 @@ public class AddDriveFolderActivity extends AppCompatActivity {
         driveLink = findViewById(R.id.driveLink);
         importer = findViewById(R.id.btn_import);
 
-//        allowLandscape.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-//            @Override
-//            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-//                willAllowLandscape = b;
-//            }
-//        });
+        Button frombackup = findViewById(R.id.frombackup);
+        frombackup.setOnClickListener(new View.OnClickListener() {
+             @Override
+             public void onClick(View v) {
+                 Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                 intent.addCategory(Intent.CATEGORY_OPENABLE);
+                 intent.setType("application/*");
+                 startActivityForResult(intent, RESTORE_BACKUP);
+             }
+        });
 
         importer.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -107,17 +120,18 @@ public class AddDriveFolderActivity extends AppCompatActivity {
 
                 service = DriveHelper.getDrive(context);
 
-                switch (sURIMatcher.match(Uri.parse(driveLink.getText().toString()))) {
-                    case 1: {
-                        folderId = Uri.parse(driveLink.getText().toString()).getQueryParameter("id");
-                        break;
+                folderId = DriveHelper.getId(driveLink.getText().toString());
+
+                if (folderId.equals("")) {
+                    reason = "Enter a Drive folder link.";
+                    return null;
+                }
+
+                try (Cursor c = db.db.rawQuery("SELECT id FROM CollectionsDB WHERE id = ?", new String[]{folderId});) {
+                    if (c.moveToFirst()) {
+                        reason = "This folder is already in your library.";
+                        return null;
                     }
-                    case 2: {
-                        folderId = Uri.parse(driveLink.getText().toString()).getLastPathSegment();
-                        break;
-                    }
-                    default:
-                        folderId = driveLink.getText().toString();
                 }
 
                 Log.d(TAG, "doInBackground: " + folderId);
@@ -127,16 +141,23 @@ public class AddDriveFolderActivity extends AppCompatActivity {
                         .setFields("files(id, name, thumbnailLink, imageMediaMetadata)")
                         .execute();
 
+                List<File> files = result.getFiles();
+
+                if (files.size() == 0) {
+                    reason = "Driver has found no images in this folder.";
+                    return null;
+                }
+                
                 File folderDetails = service.files().get(folderId)
                         .setFields("name, owners")
                         .execute();
 
-                List<File> files = result.getFiles();
+                Log.d(TAG, "File count: " + files.size());
 
                 //                    if (willAllowLandscape || file.getImageMediaMetadata().getWidth() < file.getImageMediaMetadata().getHeight()) {
                 //                    }
 
-                Log.d(TAG, "doInBackground: " + files.size());
+//                Log.d(TAG, "doInBackground: " + files.size());
 
                 folderNameStr = folderDetails.getName();
                 authorStr = folderDetails.getOwners().get(0).getDisplayName();
@@ -159,16 +180,14 @@ public class AddDriveFolderActivity extends AppCompatActivity {
                     reason = "Google Drive had a meltdown. Try again.";
                 } else if (reason.contains("Unable to resolve")) {
                     reason = "You're not connected to the internet. Please check your internet connection.";
-                } else {
-                    reason = e.getMessage();
                 }
                 e.printStackTrace();
                 return null;
             } catch (Exception f) {
                 f.printStackTrace();
                 reason = f.getMessage();
+                return null;
             }
-            return null;
         }
 
         RecyclerView preview;
@@ -214,13 +233,10 @@ public class AddDriveFolderActivity extends AppCompatActivity {
                                 } else {
                                     Toast.makeText(context, "Folder added successfully!", Toast.LENGTH_SHORT).show();
                                     setResult(RESULT_OK);
-                                    finish();
+                                    Intent intent = new Intent(context, CollectionActivity.class);
+                                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                    startActivity(intent);
                                 }
-                            }
-
-                            @Override
-                            protected void onCancelled() {
-                                super.onCancelled();
                             }
                         }.execute();
                     }
@@ -234,11 +250,27 @@ public class AddDriveFolderActivity extends AppCompatActivity {
                     }
                 });
             } else {
-                Toast.makeText(context, "An error has been encountered: \n\n" + reason, Toast.LENGTH_LONG).show();
+                Toast.makeText(context, "Error: " + reason, Toast.LENGTH_LONG).show();
             }
             importer.setEnabled(true);
             importer.setText("Import Folder");
             importer.setBackgroundColor(getResources().getColor(R.color.solidblue));
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == RESTORE_BACKUP){
+            Log.d(TAG, "onActivityResult: Restoring backup");
+            if (resultCode == RESULT_OK) {
+                Intent intent = new Intent(context, ImportActivity.class);
+                intent.setData(data.getData());
+                startActivity(intent);
+                setResult(RESULT_OK);
+            } else {
+                Toast.makeText(context, "Cancelled.", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
@@ -249,6 +281,11 @@ public class AddDriveFolderActivity extends AppCompatActivity {
 
         @Override
         public boolean canScrollVertically() {
+            return false;
+        }
+
+        @Override
+        public boolean canScrollHorizontally() {
             return false;
         }
     }

@@ -5,12 +5,10 @@
     android:id="@+id/baseView"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginLeft="8dp"
-    android:layout_marginTop="16dp"
-    android:layout_marginRight="8dp"
-    android:layout_marginBottom="16dp"
+    android:layout_margin="8dp"
+    android:clipChildren="true"
     app:cardBackgroundColor="@color/actionbar"
-    app:cardCornerRadius="8dp">
+    app:cardCornerRadius="20dp">
 
     <ProgressBar
         android:id="@+id/progressBar2"
@@ -22,7 +20,7 @@
         android:indeterminateTint="@color/solidblue"
         android:max="1" />
 
-    <FrameLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
@@ -33,7 +31,11 @@
             android:layout_gravity="center"
             android:gravity="center"
             android:orientation="vertical"
-            android:visibility="gone">
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@+id/infoContainer"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
 
             <ImageView
                 android:id="@+id/imageView2"
@@ -44,10 +46,23 @@
 
             <TextView
                 android:id="@+id/textView11"
-                android:layout_width="wrap_content"
+                android:layout_width="300dp"
                 android:layout_height="wrap_content"
-                android:text="This collection failed to load."
+                android:text="This folder failed to load."
+                android:textAlignment="center"
                 android:textColor="@color/white" />
+
+            <TextView
+                android:id="@+id/errorMessage"
+                android:layout_width="300dp"
+                android:layout_height="wrap_content"
+                android:breakStrategy="balanced"
+                android:fontFamily="sans-serif-light"
+                android:text="This collection failed to load. Check your internet and try again."
+                android:textAlignment="center"
+                android:textColor="#80FFFFFF"
+                android:textSize="12sp"
+                android:textStyle="italic" />
 
             <Button
                 android:id="@+id/retryCollectionsLoad"
@@ -65,7 +80,11 @@
             android:layout_gravity="center"
             android:gravity="center"
             android:orientation="vertical"
-            android:visibility="gone">
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@+id/infoContainer"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
 
             <ImageView
                 android:id="@+id/imageView"
@@ -92,10 +111,11 @@
 
         <ImageView
             android:id="@+id/heroImage"
-            android:layout_width="match_parent"
-            android:layout_height="300dp"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
             android:scaleType="centerCrop"
             app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintDimensionRatio="1.77"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -104,27 +124,33 @@
             android:id="@+id/gradientOverlay"
             android:layout_width="match_parent"
             android:layout_height="150dp"
-            android:layout_gravity="bottom" />
+            android:layout_gravity="bottom"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/infoContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom"
-            android:padding="10dp">
+            app:layout_constraintBottom_toBottomOf="@+id/heroImage"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
 
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:orientation="horizontal"
-                app:layout_constraintBottom_toBottomOf="parent"
+                android:paddingRight="16dp"
+                app:layout_constraintBottom_toBottomOf="@+id/linearLayout4"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
+                app:layout_constraintTop_toTopOf="@+id/linearLayout4">
 
                 <ImageView
                     android:id="@+id/copyIcon"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
                     android:layout_weight="1"
                     android:padding="5dp"
                     app:srcCompat="@drawable/copy"
@@ -132,8 +158,8 @@
 
                 <ImageView
                     android:id="@+id/deleteIcon"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
                     android:layout_weight="1"
                     android:padding="5dp"
                     app:srcCompat="@drawable/delete"
@@ -142,8 +168,11 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/linearLayout4"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
+                android:layout_marginLeft="16dp"
+                android:layout_marginBottom="16dp"
                 android:orientation="vertical"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -151,8 +180,9 @@
 
                 <TextView
                     android:id="@+id/title"
-                    android:layout_width="wrap_content"
+                    android:layout_width="250dp"
                     android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
                     android:text="Collections"
                     android:textColor="@color/white"
                     android:textSize="20sp"
@@ -162,6 +192,7 @@
                     android:id="@+id/author"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-light"
                     android:text="by Someone"
                     android:textColor="@color/white"
                     android:textSize="12sp" />
@@ -170,6 +201,7 @@
                     android:id="@+id/wallCount"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-light"
                     android:text="50 Wallpapers"
                     android:textColor="@color/white"
                     android:textSize="12sp" />
@@ -177,6 +209,61 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-    </FrameLayout>
+        <TextView
+            android:id="@+id/textView8"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right|top"
+            android:fontFamily="sans-serif-black"
+            android:padding="16dp"
+            android:text="COLLECTION"
+            android:textColor="@color/white"
+            android:textSize="12dp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/selectedView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:id="@+id/imageView9"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/selected_card"
+                app:tint="#FFFFFF" />
+
+            <ImageView
+                android:id="@+id/imageView7"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/selected"
+                app:tint="#FFFFFF" />
+
+            <ImageView
+                android:id="@+id/imageView8"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/check"
+                app:tint="#000" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.cardview.widget.CardView>

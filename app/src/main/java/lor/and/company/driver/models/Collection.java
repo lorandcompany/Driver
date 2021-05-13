@@ -4,21 +4,17 @@ import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import androidx.annotation.NonNull;
-
-import java.util.ArrayList;
-
 import javax.annotation.ParametersAreNonnullByDefault;
 
 @ParametersAreNonnullByDefault
 public class Collection implements Parcelable {
-    String id, name, folderLink, owner;
+    String id, name, folderLink, owner, errorMessage;
     int count;
     long modifiedTime;
     Uri thumbnailLink;
-    boolean error;
+    boolean error, selected = false;
 
-    public Collection( String id, String name, String owner, String folderLink, long modifiedTime, int count, String thumbnailLink, boolean error) {
+    public Collection(String id, String name, String owner, String folderLink, long modifiedTime, int count, String thumbnailLink, boolean error, String errorMessage) {
         this.id = id;
         this.name = name;
         this.folderLink = folderLink;
@@ -27,6 +23,11 @@ public class Collection implements Parcelable {
         this.modifiedTime = modifiedTime;
         this.thumbnailLink = Uri.parse(thumbnailLink);
         this.error = error;
+        this.errorMessage = errorMessage;
+    }
+
+    public Object[] createObject() {
+        return new Object[]{this.id, this.name, this.owner, this.folderLink, this.count, this.modifiedTime, this.thumbnailLink, this.error, this.errorMessage};
     }
 
     protected Collection(Parcel in) {
@@ -38,6 +39,8 @@ public class Collection implements Parcelable {
         modifiedTime = in.readLong();
         thumbnailLink = in.readParcelable(Uri.class.getClassLoader());
         error = in.readByte() != 0;
+        errorMessage = in.readString();
+        selected = false;
     }
 
     @Override
@@ -50,7 +53,10 @@ public class Collection implements Parcelable {
         dest.writeLong(modifiedTime);
         dest.writeParcelable(thumbnailLink, flags);
         dest.writeByte((byte) (error ? 1 : 0));
+        dest.writeString(errorMessage);
     }
+
+
 
     @Override
     public int describeContents() {
@@ -68,6 +74,14 @@ public class Collection implements Parcelable {
             return new Collection[size];
         }
     };
+
+    public void setSelected(boolean selected) {
+        this.selected = selected;
+    }
+
+    public boolean getSelected(){
+        return selected;
+    }
 
     public String getId() {
         return id;
@@ -99,5 +113,9 @@ public class Collection implements Parcelable {
 
     public int getCount() {
         return count;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
     }
 }

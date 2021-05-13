@@ -13,7 +13,7 @@
         android:id="@+id/frameLayout"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/adView2"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/constraintLayout2">
@@ -57,7 +57,7 @@
                     android:textSize="12dp" />
 
                 <ProgressBar
-                    android:id="@+id/progressBar3"
+                    android:id="@+id/importProgress"
                     style="?android:attr/progressBarStyleHorizontal"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -82,13 +82,35 @@
         <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
             android:id="@+id/refresher"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:fadingEdge="vertical"
+            android:requiresFadingEdge="vertical">
 
-            <androidx.recyclerview.widget.RecyclerView
+            <lor.and.company.driver.classes.FadingEdgeRecyclerView
                 android:id="@+id/wallpaperRecyclerView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:padding="8dp"
+                android:clipToPadding="false"
+                android:fadeScrollbars="false"
+                android:fadingEdge="vertical"
+                android:fadingEdgeLength="16dp"
+                android:paddingLeft="8dp"
+                android:paddingTop="8dp"
+                android:paddingRight="8dp"
+                android:paddingBottom="16dp"
+                android:requiresFadingEdge="vertical"
+                android:scrollIndicators="right"
+                android:scrollbarAlwaysDrawVerticalTrack="true"
+                android:scrollbarFadeDuration="0"
+                android:scrollbarSize="8dp"
+                android:scrollbarStyle="outsideInset"
+                android:scrollbars="vertical"
+                android:verticalScrollbarPosition="right"
+                app:fastScrollEnabled="false"
+                app:fastScrollHorizontalThumbDrawable="@drawable/thumb_drawable"
+                app:fastScrollHorizontalTrackDrawable="@drawable/line_drawable"
+                app:fastScrollVerticalThumbDrawable="@drawable/thumb_drawable"
+                app:fastScrollVerticalTrackDrawable="@drawable/line_drawable"
                 app:reverseLayout="false" />
         </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
     </FrameLayout>
@@ -96,9 +118,10 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/constraintLayout2"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:background="@color/actionbar"
+        android:layout_height="0dp"
+        android:background="@color/bg"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -106,20 +129,22 @@
             android:id="@+id/collectionName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="15dp"
-            android:fontFamily="sans-serif-thin"
+            android:layout_marginStart="8dp"
+            android:fontFamily="@font/bold"
             android:text="Driver"
             android:textColor="@color/white"
             android:textSize="24sp"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toBottomOf="@id/wallpaperBack"
             app:layout_constraintStart_toEndOf="@+id/wallpaperBack"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="@id/wallpaperBack" />
 
         <ImageView
             android:id="@+id/wallpaperBack"
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:layout_marginStart="15dp"
+            android:layout_marginTop="15dp"
+            android:layout_marginBottom="12dp"
             android:clickable="true"
             android:focusable="true"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -128,6 +153,17 @@
             app:srcCompat="@drawable/back"
             app:tint="#FFFFFF" />
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <com.google.android.gms.ads.AdView xmlns:ads="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/adView2"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:visibility="gone"
+        ads:adSize="SMART_BANNER"
+        ads:adUnitId="@string/mobileads_wallpapers"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

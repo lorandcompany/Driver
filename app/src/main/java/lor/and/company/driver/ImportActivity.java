@@ -1,41 +1,59 @@
 package lor.and.company.driver;
 
+import androidx.annotation.Keep;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.UriMatcher;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.api.services.drive.Drive;
+import com.google.api.services.drive.model.File;
+import com.google.api.services.drive.model.FileList;
 
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import lor.and.company.driver.helpers.DBHelper;
+import lor.and.company.driver.adapters.ImportOptionsListener;
+import lor.and.company.driver.adapters.ImportRecyclerAdapter;
+import lor.and.company.driver.helpers.DBHelper.CollectionsDB;
 import lor.and.company.driver.helpers.DriveHelper;
 
-public class ImportActivity extends AppCompatActivity implements RefresherListener{
+public class ImportActivity extends AppCompatActivity implements ImportOptionsListener {
 
     private static final String TAG = "ImportActivity";
 
     Context context;
     TextView loadText;
     ProgressBar progressBar;
-    LinearLayout whatToDo, statusLayout;
+    String[] ids;
+    HashMap<Integer, ImportObject> dictionary = new HashMap<>();
+
+    ConstraintLayout loadingView, container;
+
+    ProgressBar importProgress;
+    TextView importText;
+    ConstraintLayout importlayout;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,171 +61,250 @@ public class ImportActivity extends AppCompatActivity implements RefresherListen
 
         context = this;
 
-        Button append = findViewById(R.id.append);
-        Button replace = findViewById(R.id.replace);
+        loadingView = findViewById(R.id.loadingView);
+        container = findViewById(R.id.container);
+
+        importProgress = findViewById(R.id.importProgress);
+        importText = findViewById(R.id.importText);
+        importlayout = findViewById(R.id.importView);
 
         Uri data = getIntent().getData();
 
         Log.d("Logd", "onCreate: " + data.toString());
 
-        TextView status = findViewById(R.id.status);
-        progressBar = findViewById(R.id.progressBar3);
-
-        whatToDo = findViewById(R.id.whatToDo);
-        statusLayout = findViewById(R.id.statusLayout);
-
         loadText = findViewById(R.id.loadText);
-        append.setOnClickListener(new View.OnClickListener() {
+        progressBar = findViewById(R.id.importProgress);
+
+        ContentResolver contentResolver = this.getContentResolver();
+
+        InputStream inputStream;
+        try {
+            inputStream = contentResolver.openInputStream(data);
+            ids = IOUtils.toString(inputStream, "UTF-8").split("\r\n");
+            inputStream.close();
+            LoadFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        Button importButton = findViewById(R.id.import2);
+        importButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                status.setText("Appending Folders");
-                whatToDo.setVisibility(View.INVISIBLE);
-                statusLayout.setVisibility(View.VISIBLE);
-                ContentResolver contentResolver = context.getContentResolver();
-                new AsyncTask<Void, Integer, Integer>(){
-                    int count;
-                    int max;
-
-                    @Override
-                    protected Integer doInBackground(Void... voids) {
-                        try {
-                            DBHelper.CollectionsDB collectionsDB = new DBHelper.CollectionsDB(context);
-
-                            InputStream inputStream = contentResolver.openInputStream(data);
-                            String[] ids = IOUtils.toString(inputStream, "UTF-8").split("\r\n");
-                            inputStream.close();
-
-                            max = ids.length;
-                            count = 0;
-                            publishProgress(count);
-                            int errorcount = 0;
-                            for (String id : ids) {
-                                count += 1;
-                                if (!collectionsDB.ifExists(id)) {
-                                    Drive drive = DriveHelper.getDrive(context);
-                                    publishProgress(count);
-                                    try {
-                                        collectionsDB.addCollection(drive, id);
-                                    } catch (Exception e) {
-                                        errorcount += 1;
-                                    }
-
-                                }
-                            }
-                            return errorcount;
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            return -1;
-                        }
-
-                    }
-
-                    @Override
-                    protected void onPostExecute(Integer errorcount) {
-                        super.onPostExecute(errorcount);
-                        if (errorcount == 0) {
-                            Toast.makeText(context, "Folders imported successfully!", Toast.LENGTH_SHORT).show();
-                        } else if (errorcount > 0) {
-                            if (errorcount == 1) {
-                                Toast.makeText(context, "Folders partially imported!\n\nA collection failed to import.", Toast.LENGTH_SHORT).show();
-                            } else {
-                                Toast.makeText(context, "Folders partially imported!\n\n" + errorcount + " collections failed to import.", Toast.LENGTH_SHORT).show();
-                            }
-                        } else {
-                            Toast.makeText(context, "Importing failed.", Toast.LENGTH_SHORT).show();
-                        }
-                        setResult(RESULT_OK);
-                        finish();
-                    }
-
-                    @Override
-                    protected void onProgressUpdate(Integer... values) {
-                        super.onProgressUpdate(values);
-                        onRefreshUpdate(values[0], max);
-                    }
-                }.execute();
+            public void onClick(View v) {
+                startImport();
             }
         });
 
-        replace.setOnClickListener(new View.OnClickListener() {
+        Button back = findViewById(R.id.back);
+        back.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                status.setText("Replacing Folders");
-                whatToDo.setVisibility(View.INVISIBLE);
-                statusLayout.setVisibility(View.VISIBLE);
-                ContentResolver contentResolver = context.getContentResolver();
-
-                new AsyncTask<Void, Integer, Integer>() {
-                    int count = 0;
-                    int max;
-
-                    @Override
-                    protected Integer doInBackground(Void... voids) {
-                        try {
-                            DBHelper.CollectionsDB collectionsDB = new DBHelper.CollectionsDB(context);
-                            collectionsDB.db.execSQL("DELETE FROM CollectionsDB");
-                            new DBHelper.WallpaperDB(context).db.execSQL("DELETE FROM WallpaperDB");
-
-                            InputStream inputStream = contentResolver.openInputStream(data);
-                            String[] ids = IOUtils.toString(inputStream, "UTF-8").split("\r\n");
-                            inputStream.close();
-
-                            max = ids.length;
-                            count = 0;
-                            publishProgress(count);
-                            int errorcount = 0;
-                            for (String id : ids) {
-                                count += 1;
-                                if (!collectionsDB.ifExists(id)) {
-                                    Drive drive = DriveHelper.getDrive(context);
-                                    publishProgress(count);
-                                    try {
-                                        collectionsDB.addCollection(drive, id);
-                                    } catch (Exception e) {
-                                        errorcount += 1;
-                                    }
-                                }
-                            }
-                            return errorcount;
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            return -1;
-                        }
-                    }
-
-                    @Override
-                    protected void onPostExecute(Integer errorcount) {
-                        super.onPostExecute(errorcount);
-                        if (errorcount == 0) {
-                            Toast.makeText(context, "Folders imported successfully!", Toast.LENGTH_SHORT).show();
-                        } else if (errorcount > 0) {
-                            if (errorcount == 1) {
-                                Toast.makeText(context, "Folders partially imported!\n\nA collection failed to import.", Toast.LENGTH_SHORT).show();
-                            } else {
-                                Toast.makeText(context, "Folders partially imported!\n\n" + errorcount + " collections failed to import.", Toast.LENGTH_SHORT).show();
-                            }
-                        } else {
-                            Toast.makeText(context, "Importing failed.", Toast.LENGTH_SHORT).show();
-                        }
-                        setResult(RESULT_OK);
-                        finish();
-                    }
-
-                    @Override
-                    protected void onProgressUpdate(Integer... values) {
-                        super.onProgressUpdate(values);
-                        onRefreshUpdate(values[0], max);
-                    }
-                }.execute();
+            public void onClick(View v) {
+                ((Activity)context).finish();
             }
         });
     }
 
-    @Override
-    public void onRefreshUpdate(int progress, int max) {
+    int errorCount = 0;
+
+    public void startImport() {
+        container.setVisibility(View.GONE);
+        importlayout.setVisibility(View.VISIBLE);
+
+        CollectionsDB db = new CollectionsDB(context);
+        Drive drive = DriveHelper.getDrive(context);
+        ArrayList<ImportObject> importObjects = new ArrayList<>();
+        for (Map.Entry<Integer, ImportObject> folder: dictionary.entrySet()) {
+            if (!folder.getValue().ifError() && folder.getValue().ifImport()) {
+                importObjects.add(folder.getValue());
+            }
+        }
+        for (ImportObject importObject: importObjects) {
+            new AsyncTask<Void, Void, Boolean>() {
+                @Override
+                protected Boolean doInBackground(Void... voids) {
+                    try {
+                        db.addCollection(drive, importObject.getFolderId());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        return false;
+                    }
+                    return true;
+                }
+
+                @Override
+                protected void onPostExecute(Boolean succeeded) {
+                    super.onPostExecute(succeeded);
+                    if (!succeeded) {
+                        errorCount++;
+                    }
+                    importProgress(importObjects.size());
+                }
+            }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        }
+    }
+
+    int progress = -1;
+    int importCounter = 0;
+
+    public void importProgress(int max) {
+        importCounter++;
+        importProgress.setIndeterminate(false);
+        importProgress.setMax(max);
+        importProgress.setProgress(importCounter);
+        importText.setText("Imported " + importCounter + " out of " + max + " folders.");
+        if (max == importCounter) {
+            if (errorCount == 1) {
+                Toast.makeText(context, "Partially imported folders. \nA folder failed to load.", Toast.LENGTH_SHORT).show();
+            } else if (errorCount > 1) {
+                Toast.makeText(context, "Partially imported folders. \n" + errorCount + " folders failed to load.", Toast.LENGTH_SHORT).show();
+            }
+            setResult(RESULT_OK);
+            Intent intent = new Intent(context, CollectionActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+        }
+    }
+
+    public void updateProgress() {
+        int max = ids.length;
+        progressBar.setProgress(++progress);
         progressBar.setMax(max);
         progressBar.setIndeterminate(progress == 0);
-        progressBar.setProgress(progress);
-        loadText.setText("Loading folder " + progress + " out of " + max);
+        loadText.setText("Loading folder " + (progress)  + " out of " + max);
+        Log.d(TAG, "updateProgress: Finished loading "  + progress + "out of " + max);
+        if (progress == max) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (dictionary.size() != 0) {
+                        Log.d(TAG, "Finished all tasks");
+                        container.setVisibility(View.VISIBLE);
+                        loadingView.setVisibility(View.GONE);
+                        RecyclerView list = findViewById(R.id.recyclerView);
+                        list.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
+                        ImportRecyclerAdapter adapter = new ImportRecyclerAdapter(context, dictionary, (ImportOptionsListener) context);
+                        list.setAdapter(adapter);
+                        list.smoothScrollToPosition(0);
+                    } else {
+                        Toast.makeText(context, "You already have all these folders in your library.", Toast.LENGTH_LONG).show();
+                        finish();
+                    }
+                }
+            });
+        }
+    }
+
+    public void LoadFile() {
+        Drive service = DriveHelper.getDrive(context);
+        CollectionsDB collectionsDB = new CollectionsDB(context);
+        updateProgress();
+        try {
+            for (int i = 0; i < ids.length; i++) {
+                Log.d(TAG, "LoadFile: " + ids[i]);
+                String folderId = ids[i].split(":::::")[0];
+                String author = ids[i].split(":::::")[2];
+                String name = ids[i].split(":::::")[1];
+                Log.d(TAG, "LoadFile: Loading " + folderId);
+                if (collectionsDB.ifExists(folderId)) {
+                    updateProgress();
+                    Log.d(TAG, "LoadFile: " + folderId + " was already imported.");
+                    continue;
+                }
+                int finalI = i;
+                Log.d(TAG, "LoadFile: finalI " + finalI);
+                new AsyncTask<Void, Void, Void>() {
+                    @Override
+                    protected Void doInBackground(Void... voids) {
+                        try {
+                            FileList result = service.files().list().setQ("\"" + folderId + "\" in parents and mimeType contains \"image/\"")
+                                    .setPageSize(50)
+                                    .setFields("files(id, name, thumbnailLink, imageMediaMetadata)")
+                                    .execute();
+                            List<File> files = result.getFiles();
+                            File folderDetails = service.files().get(folderId)
+                                    .setFields("name, owners")
+                                    .execute();
+                            dictionary.put(finalI, new ImportObject(folderId, files, folderDetails));
+                        } catch (Exception e) {
+                            dictionary.put(finalI, new ImportObject(folderId, name, author));
+                            e.printStackTrace();
+                        }
+                        return null;
+                    }
+
+                    @Override
+                    protected void onPostExecute(Void aVoid) {
+                        super.onPostExecute(aVoid);
+                        updateProgress();
+                    }
+                }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            }
+        } catch (Exception e) {
+            Toast.makeText(context, "Error: The backup seems to be corrupted.", Toast.LENGTH_SHORT).show();
+            finish();
+        }
+
+    }
+
+    @Override
+    public void onWillImportChange(int index, Boolean willImport) {
+        dictionary.get(index).setWillImport(willImport);
+    }
+
+    @Keep
+    public class ImportObject {
+        String name;
+        String author;
+        String folderId;
+        boolean error = false;
+        Boolean willImport = true;
+
+        ImportObject(String folderId, String name, String author) {
+            this.name = name;
+            this.author = author;
+            this.error = true;
+            this.folderId = folderId;
+            this.willImport = false;
+        }
+
+        List<File> files;
+        File folderDetails;
+
+        ImportObject(String folderId, List<File> files, File folderDetails) {
+            this.folderId = folderId;
+            this.files = files;
+            this.folderDetails = folderDetails;
+        }
+
+        public boolean ifError() {
+            return this.error;
+        }
+
+        public boolean ifImport() {
+            return this.willImport;
+        }
+
+        public List<File> getFiles() {
+            return files;
+        }
+
+        public File getFolderDetails() {
+            return folderDetails;
+        }
+
+        public String getFolderId() {
+            return folderId;
+        }
+
+        public String getName() {
+            return name;
+        }
+        public String getAuthor() {
+            return author;
+        }
+
+        public void setWillImport(Boolean willImport) {
+            this.willImport = willImport;
+        }
     }
 }

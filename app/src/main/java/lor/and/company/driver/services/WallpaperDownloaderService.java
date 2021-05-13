@@ -1,5 +1,6 @@
 package lor.and.company.driver.services;
 
+import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -29,11 +30,15 @@ import androidx.core.app.NotificationCompat;
 
 import com.google.api.client.util.IOUtils;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Random;
 
 import lor.and.company.driver.R;
@@ -66,7 +71,8 @@ public class WallpaperDownloaderService extends Service{
 
     public interface DownloadServiceListener {
         void onProgress(int progress);
-        void onFinish();
+        void onFinish(String action);
+        void onFinish(File file);
         void onError();
     }
 
@@ -97,6 +103,8 @@ public class WallpaperDownloaderService extends Service{
         }
         return START_STICKY;
     }
+
+    Uri insert;
 
     private void startForegroundService() {
         manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -152,6 +160,8 @@ public class WallpaperDownloaderService extends Service{
 
                         manager.notify(1, progressBuilder.build());
 
+                        File file = null;
+
                         try {
                             InputStream inputStream = DriveHelper.getDrive(context).files().get(wallpaper.getId()).executeMediaAsInputStream();
                             Log.d(TAG, "run: Tagging inputstream");
@@ -166,17 +176,60 @@ public class WallpaperDownloaderService extends Service{
                             });
 
                             if (action.equals("setWallpaper")) {
-                                WallpaperManager wallpaperManager = WallpaperManager.getInstance(context);
-                                wallpaperManager.setStream(progressInputStream);
-                            } else {
-                                Uri insert;
+//                                try (Cursor query = contentResolver.query(
+//                                        MediaStore.Images.Media.INTERNAL_CONTENT_URI,
+//                                        new String[]{MediaStore.Images.Media._ID},
+//                                        MediaStore.Images.Media.DISPLAY_NAME + " LIKE 'setAsWallpaperCache'",
+//                                        null,
+//                                        null)) {
+//                                    Log.d(TAG, "run query count: " + query.getCount());
+//                                    if (query.moveToFirst()) {
+//                                        Uri contentURI = ContentUris.withAppendedId(MediaStore.Images.Media.INTERNAL_CONTENT_URI, query.getLong(0));
+//                                        if (contentResolver.delete(contentURI, MediaStore.Images.Media.DATA + " LIKE ?", new String[]{
+//                                                Environment.getDataDirectory() + File.separator + "setAsWallpaperCache"
+//                                        }) == 1) {
+//                                            Log.d(TAG, "run: Deleted");
+//                                        } else {
+//                                            Log.d(TAG, "run: Failed to delete");
+//                                        }
+//                                    } else {
+//                                        Log.d(TAG, "run: Duplicate not found");
+//                                    }
+//                                }
+//
+//                                ContentValues values = new ContentValues();
+//                                values.put(MediaStore.MediaColumns.DISPLAY_NAME, wallpaper.getName());
+//                                values.put(MediaStore.MediaColumns.MIME_TYPE, "image/");
+                                String folderPath = context.getCacheDir().toString();
+                                String filePath = folderPath + File.separator + "setAsWallpaperCache.lmao";
+                                File folder = new File(folderPath);
+                                if (!folder.exists()) {
+                                    folder.mkdirs();
+                                }
+                                file = new File(filePath);
+                                if (file.exists()) {
+                                    file.delete();
+                                }
+                                file.createNewFile();
+//                                values.put(MediaStore.MediaColumns.DATA, Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + File.separator + "Driver" + File.separator + new DBHelper.CollectionsDB(context).getCollectionById(wallpaper.getCollection()).getName()+File.separator+wallpaper.getName());
+//                                Log.d(TAG, "run: " + values.getAsString(MediaStore.Images.Media.DATA));
 
+//                                insert = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+
+                                OutputStream outputStream = new FileOutputStream(file);
+
+                                IOUtils.copy(progressInputStream, outputStream);
+
+                                listener.onFinish(file);
+//                                WallpaperManager wallpaperManager = WallpaperManager.getInstance(context);
+//                                wallpaperManager.setStream(progressInputStream);
+                            }
+                            else {
                                 ContentResolver contentResolver = getContentResolver();
-
                                 try (Cursor query = contentResolver.query(
                                         MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                                         new String[]{MediaStore.Images.Media._ID},
-                                        MediaStore.Images.Media.TITLE + " LIKE '" + new DBHelper.CollectionsDB(context).getCollectionById(wallpaper.getCollection()).getName() + "' AND " + MediaStore.Images.Media.DISPLAY_NAME + " LIKE '" + wallpaper.getName() + "'",
+                                        MediaStore.Images.Media.BUCKET_DISPLAY_NAME + " LIKE '" + new DBHelper.CollectionsDB(context).getCollectionById(wallpaper.getCollection()).getName() + "' AND " + MediaStore.Images.Media.DISPLAY_NAME + " LIKE '" + wallpaper.getName() + "'",
                                         null,
                                         null)) {
                                     Log.d(TAG, "run query count: " + query.getCount());
@@ -198,17 +251,37 @@ public class WallpaperDownloaderService extends Service{
                                 values.put(MediaStore.MediaColumns.DISPLAY_NAME, wallpaper.getName());
                                 values.put(MediaStore.MediaColumns.MIME_TYPE, "image/");
 
+                                OutputStream outputStream;
+
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                    values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + File.separator + wallpaper.getCollection());
+                                    values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + File.separator + "Driver" + File.separator +  new DBHelper.CollectionsDB(context).getCollectionById(wallpaper.getCollection()).getName());
+
+                                    insert = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+
+                                    outputStream = contentResolver.openOutputStream(insert);
                                 } else {
+                                    String folderPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + File.separator + "Driver" + File.separator + new DBHelper.CollectionsDB(context).getCollectionById(wallpaper.getCollection()).getName();
+                                    String filePath = folderPath + File.separator + wallpaper.getName();
+                                    File folder = new File(folderPath);
+                                    if (!folder.exists()) {
+                                        folder.mkdirs();
+                                    }
+                                    file = new File(filePath);
+                                    if (file.exists()) {
+                                        file.delete();
+                                    }
+                                    file.createNewFile();
                                     values.put(MediaStore.MediaColumns.DATA, Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + File.separator + "Driver" + File.separator + new DBHelper.CollectionsDB(context).getCollectionById(wallpaper.getCollection()).getName()+File.separator+wallpaper.getName());
                                     Log.d(TAG, "run: " + values.getAsString(MediaStore.Images.Media.DATA));
+
+                                    insert = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+
+                                    outputStream = new FileOutputStream(file);
+
                                 }
+                                IOUtils.copy(progressInputStream, outputStream);
 
-                                insert = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-
-                                OutputStream outputStream = contentResolver.openOutputStream(insert);
-
+                                listener.onFinish(action);
                                 Log.d(TAG, "run: Finished copying file");
                             }
 
@@ -224,13 +297,19 @@ public class WallpaperDownloaderService extends Service{
 
                             if (action.equals("download")) {
                                 finishedBuilder.setContentTitle("Download Wallpaper").setContentText("Wallpaper downloaded!");
+
+                                Intent resultIntent = new Intent(Intent.ACTION_VIEW, insert);
+                                PendingIntent resultPendingIntent =
+                                        PendingIntent.getActivity(context, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                finishedBuilder.setContentIntent(resultPendingIntent);
+                                finishedBuilder.setAutoCancel(true);
+
                             } else {
                                 finishedBuilder.setContentTitle("Apply Wallpaper").setContentText("Wallpaper applied!");
                             }
 
                             manager.notify(2, finishedBuilder.build());
-
-                            listener.onFinish();
 
                             stopForegroundService();
 
@@ -252,10 +331,9 @@ public class WallpaperDownloaderService extends Service{
                             } else {
                                 finishedBuilder.setContentTitle("Apply Wallpaper").setContentText("Failed to apply wallpaper.");
                             }
-
                             manager.notify(2, finishedBuilder.build());
 
-                            listener.onFinish();
+                            listener.onFinish(action);
                         }
                     }
                 }

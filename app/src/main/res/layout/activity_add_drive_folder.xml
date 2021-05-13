@@ -15,44 +15,85 @@
         tools:layout_editor_absoluteX="20dp"
         tools:layout_editor_absoluteY="20dp">
 
-        <Button
-            android:id="@+id/btn_import"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="IMPORT FOLDER"
+            android:gravity="bottom"
+            android:orientation="vertical"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView6"
+            app:layout_constraintVertical_bias="1.0">
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/textField"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="15dp"
-            android:hint="Google Drive Folder Link"
-            android:textColorHint="#FFFFFF"
-            app:boxBackgroundMode="outline"
-            app:boxStrokeColor="@color/selector_textinputlayout"
-            app:hintTextColor="#FFFFFF"
-            app:layout_constraintBottom_toTopOf="@+id/btn_import"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="horizontal">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/driveLink"
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/textField"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="Drive Folder Link"
+                    android:textColorHint="#FFFFFF"
+                    app:boxBackgroundMode="outline"
+                    app:boxStrokeColor="@color/selector_textinputlayout"
+                    app:hintTextColor="#FFFFFF">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/driveLink"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginRight="16dp"
+                        android:fontFamily="sans-serif-light"
+                        android:inputType="textUri"
+                        android:lines="1"
+                        android:maxLines="1"
+                        android:singleLine="true"
+                        android:textColor="@color/white"
+                        android:textColorHint="#FFFFFF" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <Button
+                    android:id="@+id/btn_import"
+                    style="@style/Widget.MaterialComponents.Button.IconOnly"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
+                    android:textSize="0dp"
+                    app:icon="@drawable/add"
+                    app:iconSize="16dp" />
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/textView31"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-light"
+                android:padding="10dp"
+                android:text="OR"
+                android:textAlignment="center"
                 android:textColor="@color/white"
-                android:textColorHint="#FFFFFF" />
+                android:textSize="14sp" />
 
-        </com.google.android.material.textfield.TextInputLayout>
+            <Button
+                android:id="@+id/frombackup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="IMPORT FROM A BACKUP" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/textView4"
             android:layout_width="wrap_content"
             android:layout_height="0dp"
-            android:fontFamily="sans-serif-light"
+            android:fontFamily="@font/light"
             android:text="@string/importDriveFolderTitle"
             android:textColor="@color/white"
             android:textSize="50sp"
@@ -64,8 +105,8 @@
             android:id="@+id/textView5"
             android:layout_width="300dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="30dp"
-            android:fontFamily="sans-serif"
+            android:layout_marginTop="16dp"
+            android:fontFamily="sans-serif-light"
             android:text="@string/importDriveFolderCaption"
             android:textColor="@color/white"
             android:textSize="14sp"
@@ -75,9 +116,9 @@
         <TextView
             android:id="@+id/textView6"
             android:layout_width="300dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="15dp"
-            android:fontFamily="sans-serif"
+            android:layout_height="0dp"
+            android:layout_marginTop="8dp"
+            android:fontFamily="sans-serif-light"
             android:text="@string/driveLinkRequirements"
             android:textColor="#80FFFFFF"
             android:textSize="12sp"
@@ -132,7 +173,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginRight="5dp"
                     android:layout_weight="1"
-                    android:text="GO BACK" />
+                    android:text="NO, GO BACK" />
 
                 <Button
                     android:id="@+id/importFolder"
@@ -140,7 +181,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="5dp"
                     android:layout_weight="1"
-                    android:text="IMPORT FOLDER" />
+                    android:text="YES, IMPORT FOLDER" />
             </LinearLayout>
 
         </LinearLayout>
@@ -174,7 +215,7 @@
             android:layout_width="300dp"
             android:layout_height="wrap_content"
             android:fontFamily="sans-serif"
-            android:text="Google Drive Folder Name"
+            android:text="Folder Name"
             android:textColor="@color/white"
             android:textSize="14sp"
             app:layout_constraintStart_toStartOf="parent"
@@ -186,7 +227,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="15dp"
             android:fontFamily="sans-serif"
-            android:text="Creator"
+            android:text="Owner"
             android:textColor="#80FFFFFF"
             android:textSize="12sp"
             app:layout_constraintStart_toStartOf="parent"
@@ -197,7 +238,7 @@
             android:layout_width="300dp"
             android:layout_height="wrap_content"
             android:fontFamily="sans-serif"
-            android:text="Google Drive Owner Name"
+            android:text="Owner Name"
             android:textColor="@color/white"
             android:textSize="14sp"
             app:layout_constraintStart_toStartOf="parent"

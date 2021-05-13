@@ -13,7 +13,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:fontFamily="@font/light"
-        android:text="Sign in with Google"
+        android:text="Sign in with Google™"
         android:textAlignment="textStart"
         android:textColor="@color/white"
         android:textSize="50sp"
@@ -25,9 +25,9 @@
         android:id="@+id/textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="30dp"
+        android:layout_marginTop="16dp"
         android:fontFamily="sans-serif-light"
-        android:text="Using this app requires authentication of your Google Account in order to access Google Drive folders."
+        android:text="Using this app requires authentication of your Google account in order to access Google&#160;Drive™ folders."
         android:textColor="@color/white"
         android:textSize="14sp"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -38,9 +38,9 @@
         android:id="@+id/textView3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="15dp"
+        android:layout_marginTop="8dp"
         android:fontFamily="sans-serif-light"
-        android:text="- Your account info is stored on-device and will not be uploaded anywhere else.\n- Your Google Account will only be used for accessing Google Drive folders. Nothing will get modified on the Google Drive folder in any way shape or form."
+        android:text="- Your account info is stored on-device and will not be uploaded anywhere else.\n- Your Google account will only be used for accessing Google&#160;Drive folders. Nothing will get modified on the Google&#160;Drive folder in any way shape or form."
         android:textColor="#80FFFFFF"
         android:textSize="12sp"
         android:textStyle="italic"
@@ -64,6 +64,7 @@
         android:layout_marginEnd="10dp"
         android:text="CANCEL AND EXIT"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/login" />
+        app:layout_constraintEnd_toStartOf="@+id/login"
+        app:layout_constraintTop_toTopOf="@+id/login" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

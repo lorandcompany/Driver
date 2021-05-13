@@ -9,8 +9,8 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/constraintLayout"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:background="@color/actionbar"
+        android:layout_height="0dp"
+        android:background="@color/bg"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -25,19 +25,19 @@
             android:textColor="@color/white"
             android:textSize="24sp"
             android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toBottomOf="@+id/wallpaperBack"
             app:layout_constraintStart_toEndOf="@+id/wallpaperBack"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="@+id/wallpaperBack" />
 
         <ImageView
             android:id="@+id/wallpaperBack"
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:layout_marginStart="15dp"
+            android:layout_marginTop="15dp"
             android:background="@color/actionbar"
             android:clickable="true"
             android:focusable="true"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/back"
@@ -47,6 +47,9 @@
     <ScrollView
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:fadeScrollbars="true"
+        android:fadingEdge="vertical"
+        android:padding="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -58,242 +61,428 @@
             android:layout_height="wrap_content"
             android:background="@color/bg"
             android:orientation="vertical"
-            android:padding="10dp"
             tools:context=".SettingsActivity">
 
-            <androidx.cardview.widget.CardView
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                app:cardBackgroundColor="@color/actionbar">
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:padding="10dp"
+                tools:visibility="gone">
+
+                <TextView
+                    android:id="@+id/textView11"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/light"
+                    android:text="Google Account"
+                    android:textColor="@color/white"
+                    android:textSize="32sp" />
 
                 <LinearLayout
+                    android:id="@+id/signedOutView"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:orientation="vertical"
-                    android:padding="10dp">
+                    android:paddingTop="5dp"
+                    tools:visibility="gone">
 
                     <TextView
-                        android:id="@+id/textView11"
+                        android:id="@+id/textview000"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Google Account"
-                        android:textColor="@color/white" />
-
-                    <LinearLayout
-                        android:id="@+id/signedOutView"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:orientation="vertical"
-                        android:padding="10dp">
-
-                        <TextView
-                            android:id="@+id/textview000"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Please sign in again."
-                            android:textColor="@color/white"
-                            android:textSize="20dp" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/signedInView"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:orientation="vertical"
-                        android:padding="10dp">
-
-                        <TextView
-                            android:id="@+id/textView17"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Signed in as"
-                            android:textColor="#80FFFFFF" />
-
-                        <TextView
-                            android:id="@+id/nameView"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Decapitated Salmon"
-                            android:textColor="@color/white"
-                            android:textSize="20dp" />
-
-                        <TextView
-                            android:id="@+id/emailView"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="something@email.com"
-                            android:textColor="#80FFFFFF"
-                            android:textSize="20dp"
-                            android:textStyle="italic" />
-                    </LinearLayout>
-
-                    <Button
-                        android:id="@+id/signInOut"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="SIGN OUT" />
-
+                        android:text="Please sign in again."
+                        android:textColor="@color/white"
+                        android:textSize="14sp" />
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
 
-            <androidx.cardview.widget.CardView
+                <LinearLayout
+                    android:id="@+id/signedInView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:paddingTop="5dp"
+                    android:paddingBottom="5dp">
+
+                    <TextView
+                        android:id="@+id/textView17"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Signed in as"
+                        android:textColor="#80FFFFFF"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/nameView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Decapitated Salmon"
+                        android:textColor="@color/white"
+                        android:textSize="18sp" />
+
+                    <TextView
+                        android:id="@+id/emailView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="something@email.com"
+                        android:textColor="#80FFFFFF"
+                        android:textSize="18sp" />
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/signInOut"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="SIGN OUT" />
+
+            </LinearLayout>
+
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_marginTop="10dp"
-                app:cardBackgroundColor="@color/actionbar">
+                android:orientation="vertical"
+                android:padding="10dp"
+                tools:visibility="gone">
+
+                <TextView
+                    android:id="@+id/textView192"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Folders"
+                    android:textColor="#FFFFFF"
+                    android:textSize="32sp" />
+
+                <TextView
+                    android:id="@+id/textView182"
+                    android:layout_width="300dp"
+                    android:layout_height="wrap_content"
+                    android:paddingBottom="10dp"
+                    android:text="Create a backup or share it to others by exporting your Google Drive folder. Restore your exported folders by importing it."
+                    android:textColor="#FFFFFF" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:padding="10dp">
-
-                    <TextView
-                        android:id="@+id/textView19"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Folders"
-                        android:textColor="#FFFFFF" />
-
-                    <TextView
-                        android:id="@+id/textView18"
-                        android:layout_width="300dp"
-                        android:layout_height="wrap_content"
-                        android:paddingBottom="10dp"
-                        android:text="Create a backup or share it to others by exporting your Google Drive folder. Restore your exported folders by importing it."
-                        android:textColor="#80FFFFFF" />
-
-                    <Button
-                        android:id="@+id/exportDrive"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="EXPORT DRIVE FOLDERS" />
+                    android:orientation="horizontal">
 
                     <Button
                         android:id="@+id/importDrive"
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="IMPORT DRIVE FOLDERS" />
+                        android:layout_marginRight="5dp"
+                        android:layout_weight="1"
+                        android:text="IMPORT" />
 
-                    <FrameLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-
-                    </FrameLayout>
+                    <Button
+                        android:id="@+id/exportDrive"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="5dp"
+                        android:layout_weight="1"
+                        android:text="EXPORT" />
                 </LinearLayout>
-            </androidx.cardview.widget.CardView>
 
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                app:cardBackgroundColor="@color/actionbar">
-
-                <LinearLayout
+                <FrameLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:padding="10dp">
+                    android:layout_height="wrap_content">
 
-                    <TextView
-                        android:id="@+id/textView13"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Animations"
-                        android:textColor="#FFFFFF" />
+                </FrameLayout>
+            </LinearLayout>
 
-                    <TextView
-                        android:id="@+id/textView15"
-                        android:layout_width="300dp"
-                        android:layout_height="wrap_content"
-                        android:paddingBottom="10dp"
-                        android:text="Disable animations to improve performance"
-                        android:textColor="#80FFFFFF" />
-
-                    <FrameLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-
-                        <Button
-                            android:id="@+id/enableAnimations"
-                            style="@style/Widget.AppCompat.Button.Borderless"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="ENABLE" />
-
-                        <Button
-                            android:id="@+id/disableAnimations"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="DISABLE" />
-                    </FrameLayout>
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <androidx.cardview.widget.CardView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                android:visibility="gone"
-                app:cardBackgroundColor="@color/actionbar">
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:padding="10dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="10dp">
+                    android:layout_weight="1"
+                    android:orientation="vertical">
 
                     <TextView
-                        android:id="@+id/textView12"
-                        android:layout_width="match_parent"
+                        android:id="@+id/textView13"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Cache"
-                        android:textColor="#FFFFFF" />
+                        android:text="Animations"
+                        android:textColor="#FFFFFF"
+                        android:textSize="32sp" />
 
                     <TextView
-                        android:id="@+id/textView16"
+                        android:id="@+id/textView15"
+                        android:layout_width="250dp"
+                        android:layout_height="wrap_content"
+                        android:paddingBottom="10dp"
+                        android:text="Disable animations to improve performance"
+                        android:textColor="#FFFFFF" />
+                </LinearLayout>
+
+                <Switch
+                    android:id="@+id/animationToggle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:buttonTintMode="add"
+                    android:checked="true"
+                    android:text="Switch"
+                    android:thumbTint="@color/solidblue"
+                    android:trackTint="@color/selector_enabled_disable" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="10dp"
+                android:orientation="vertical"
+                android:padding="10dp">
+
+                <TextView
+                    android:id="@+id/nameAuthor"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Ads"
+                    android:textColor="#FFFFFF"
+                    android:textSize="32sp" />
+
+                <TextView
+                    android:id="@+id/textView202"
+                    android:layout_width="300dp"
+                    android:layout_height="wrap_content"
+                    android:paddingBottom="10dp"
+                    android:text="The app supports the developer using ads. You can disable ads entirely by purchasing it via an in-app purchase. If you already bought it, you can restore your previous purchase if it doesn't apply automatically."
+                    android:textColor="#FFFFFF" />
+
+                <LinearLayout
+                    android:id="@+id/adLoadingContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal">
+
+                    <ProgressBar
+                        android:id="@+id/progressBar3"
+                        style="?android:attr/progressBarStyle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_weight="0"
+                        android:indeterminate="true"
+                        android:indeterminateTint="@color/solidblue" />
+
+                    <TextView
+                        android:id="@+id/textView14"
                         android:layout_width="300dp"
                         android:layout_height="wrap_content"
-                        android:text="Clear the cache only if your storage is struggling. The cache makes loading images faster the 2nd time."
-                        android:textColor="#80FFFFFF" />
+                        android:layout_weight="1"
+                        android:paddingTop="5dp"
+                        android:paddingBottom="5dp"
+                        android:text="Connecting to Google Play..."
+                        android:textColor="#FFFFFF" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/adBuyRestoreContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:visibility="gone">
+
+                    <Button
+                        android:id="@+id/buyAds"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginRight="5dp"
+                        android:layout_weight="1"
+                        android:text="REMOVE ADS" />
+
+                    <Button
+                        android:id="@+id/restorePurchases"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="5dp"
+                        android:layout_weight="1"
+                        android:text="RESTORE PURCHASES" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/adFailedContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/textView20"
+                        android:layout_width="300dp"
+                        android:layout_height="wrap_content"
+                        android:paddingBottom="10dp"
+                        android:text="Driver failed to connect to the Google Play servers. Check your internet connection and try again by clicking the button below."
+                        android:textColor="#FFFFFF" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:orientation="vertical"
-                        android:padding="10dp">
-
-                        <TextView
-                            android:id="@+id/textView14"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Cache size"
-                            android:textColor="#80FFFFFF" />
-
-                        <TextView
-                            android:id="@+id/cacheSize"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="12GB"
-                            android:textColor="@color/white"
-                            android:textSize="20dp" />
-
-                    </LinearLayout>
-
-                    <FrameLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
+                        android:orientation="horizontal">
 
                         <Button
-                            android:id="@+id/cache"
-                            style="@style/Widget.AppCompat.Button"
+                            android:id="@+id/retryBillingLoad"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginRight="5dp"
+                            android:layout_weight="1"
+                            android:text="RECONNECT" />
+
+                    </LinearLayout>
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="10dp"
+                android:orientation="vertical"
+                android:padding="10dp"
+                tools:visibility="visible">
+
+                <TextView
+                    android:id="@+id/textView19"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Layout"
+                    android:textColor="#FFFFFF"
+                    android:textSize="32sp" />
+
+                <TextView
+                    android:id="@+id/textView18"
+                    android:layout_width="300dp"
+                    android:layout_height="wrap_content"
+                    android:paddingBottom="10dp"
+                    android:text="Change the way your homescreen looks like."
+                    android:textColor="#FFFFFF" />
+
+                <RadioGroup
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical">
+
+                        <androidx.cardview.widget.CardView
+                            android:id="@+id/immersive"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_marginBottom="10dp"
+                            app:cardBackgroundColor="@color/actionbar"
+                            app:cardCornerRadius="16dp">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_margin="16dp"
+                                android:orientation="horizontal">
+
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:orientation="vertical">
+
+                                    <TextView
+                                        android:id="@+id/textView123"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:text="Immersive"
+                                        android:textColor="#FFFFFF"
+                                        android:textSize="20sp" />
+
+                                    <TextView
+                                        android:id="@+id/textView163"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="Enabled fullscreen previews and horizontal scrolling."
+                                        android:textColor="#FFFFFF" />
+
+                                </LinearLayout>
+
+                                <RadioButton
+                                    android:id="@+id/immersiveRadio"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_gravity="center|right"
+                                    android:layout_weight="1"
+                                    android:padding="16dp" />
+
+                            </LinearLayout>
+
+                        </androidx.cardview.widget.CardView>
+
+                        <androidx.cardview.widget.CardView
+                            android:id="@+id/compact"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="CLEAR CACHE" />
-                    </FrameLayout>
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
+                            android:layout_marginBottom="10dp"
+                            app:cardBackgroundColor="@color/actionbar"
+                            app:cardCornerRadius="16dp">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_margin="16dp"
+                                android:gravity="center|center_horizontal"
+                                android:orientation="horizontal">
+
+                                <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:orientation="vertical">
+
+                                    <TextView
+                                        android:id="@+id/textView12"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:text="Compact"
+                                        android:textColor="#FFFFFF"
+                                        android:textSize="20sp" />
+
+                                    <TextView
+                                        android:id="@+id/textView16"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:text="More information in one screen with vertical scrolling."
+                                        android:textColor="#FFFFFF" />
+                                </LinearLayout>
+
+                                <RadioButton
+                                    android:id="@+id/compactRadio"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_gravity="center|right"
+                                    android:layout_weight="1"
+                                    android:gravity="center|right"
+                                    android:padding="16dp" />
+
+                            </LinearLayout>
+
+                        </androidx.cardview.widget.CardView>
+
+                    </LinearLayout>
+                </RadioGroup>
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                </FrameLayout>
+            </LinearLayout>
+
         </LinearLayout>
     </ScrollView>
 

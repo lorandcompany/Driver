@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="orderBy">
+        <item>Folder Name</item>
+        <item>Author</item>
+        <item>Image count</item>
+        <item>Recently Updated</item>
+    </string-array>
+</resources>

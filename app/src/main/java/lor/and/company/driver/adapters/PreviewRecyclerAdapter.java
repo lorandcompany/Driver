@@ -52,26 +52,34 @@ public class PreviewRecyclerAdapter extends RecyclerView.Adapter {
         }
 
         public void bind (File file) {
+
             Log.d(TAG, "bind: " + file);
 
             base.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                 @Override
                 public void onGlobalLayout() {
-                    int width = base.getMeasuredWidth();
 
                     ViewGroup.LayoutParams layoutParams = base.getLayoutParams();
 
-                    float ratio;
+                    Log.d(TAG, "bind: " + file.getName());
 
-                    if (file.getImageMediaMetadata().getRotation().equals(1) | file.getImageMediaMetadata().getRotation().equals(3)) {
-                        ratio = image.getMeasuredWidth() / (float) file.getImageMediaMetadata().getHeight();
-                        layoutParams.width = width;
-                        layoutParams.height = (int) (file.getImageMediaMetadata().getWidth() * ratio);
-                    } else {
+                    float ratio;
+                    try {
+                        if (file.getImageMediaMetadata().getRotation() == 1 | file.getImageMediaMetadata().getRotation() ==3 ) {
+                            ratio = (float) image.getMeasuredWidth() / (float) file.getImageMediaMetadata().getHeight();
+                            layoutParams.width = image.getMeasuredWidth();
+                            layoutParams.height = (int) (file.getImageMediaMetadata().getWidth() * ratio);
+                        } else {
+                            ratio = image.getMeasuredWidth() / (float) file.getImageMediaMetadata().getWidth();
+                            layoutParams.width = image.getMeasuredWidth();
+                            layoutParams.height = (int) (file.getImageMediaMetadata().getHeight() * ratio);
+                        }
+                    } catch (NullPointerException e) {
                         ratio = image.getMeasuredWidth() / (float) file.getImageMediaMetadata().getWidth();
-                        layoutParams.width = width;
+                        layoutParams.width = image.getMeasuredWidth();
                         layoutParams.height = (int) (file.getImageMediaMetadata().getHeight() * ratio);
                     }
+
 
                     base.setLayoutParams(layoutParams);
 
@@ -107,5 +115,15 @@ public class PreviewRecyclerAdapter extends RecyclerView.Adapter {
     @Override
     public int getItemCount() {
         return files.size();
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return position;
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        return position;
     }
 }

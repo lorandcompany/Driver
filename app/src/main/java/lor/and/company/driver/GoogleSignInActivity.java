@@ -23,6 +23,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.api.services.drive.DriveScopes;
@@ -97,6 +98,7 @@ public class GoogleSignInActivity extends AppCompatActivity {
                         data.getClass();
                         Intent intent = new Intent(context, CollectionActivity.class);
                         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        intent.putExtra("refresh", true);
                         context.startActivity(intent);
                     }
                 });

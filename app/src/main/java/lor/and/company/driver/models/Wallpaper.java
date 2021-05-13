@@ -2,15 +2,20 @@ package lor.and.company.driver.models;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
+
+import androidx.annotation.Keep;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
 @ParametersAreNonnullByDefault
 public class Wallpaper implements Parcelable {
     String id, name, thumbnailLink, downloadLink, collection;
-    long createdOn, size;
+    long createdOn, size, addedOn = 0;
+    int x, y;
+    boolean onFavourites = false;
 
-    public Wallpaper(String id, String name, String thumbnailLink, String downloadLink, String collection, long createdOn, long size) {
+    public Wallpaper(String id, String name, String thumbnailLink, String downloadLink, String collection, long createdOn, long size, int x, int y) {
         this.id = id;
         this.name = name;
         this.thumbnailLink = thumbnailLink;
@@ -18,6 +23,24 @@ public class Wallpaper implements Parcelable {
         this.collection = collection;
         this.createdOn = createdOn;
         this.size = size;
+        this.x = x;
+        this.y = y;
+    }
+
+    public boolean isFavourite() {
+        return onFavourites;
+    }
+
+    public void setFavourite(boolean onFavourites) {
+        this.onFavourites = onFavourites;
+    }
+
+    public void setAddedOn(long addedOn) {
+        this.addedOn = addedOn;
+    }
+
+    public long getAddedOn() {
+        return addedOn;
     }
 
     public String getId() {
@@ -40,16 +63,20 @@ public class Wallpaper implements Parcelable {
         return thumbnailLink;
     }
 
-    public String getDownloadLink() {
-        return downloadLink;
-    }
-
     public long getSize() {
         return size;
     }
 
+    public int getWidth() {
+        return x;
+    }
+
+    public int getHeight() {
+        return y;
+    }
+
     public Object[] createObject() {
-        return new Object[]{this.id,this.name,this.thumbnailLink,this.downloadLink,this.collection,this.createdOn,this.size};
+        return new Object[]{this.id,this.name,this.thumbnailLink,this.downloadLink,this.collection,this.createdOn,this.size,this.x,this.y};
     }
 
     @Override
@@ -66,6 +93,8 @@ public class Wallpaper implements Parcelable {
         dest.writeString(this.collection);
         dest.writeLong(this.createdOn);
         dest.writeLong(this.size);
+        dest.writeInt(this.x);
+        dest.writeInt(this.y);
     }
 
     protected Wallpaper(Parcel in) {
@@ -76,6 +105,8 @@ public class Wallpaper implements Parcelable {
         this.collection = in.readString();
         this.createdOn = in.readLong();
         this.size = in.readLong();
+        this.x = in.readInt();
+        this.y = in.readInt();
     }
 
     public static final Creator<Wallpaper> CREATOR = new Creator<Wallpaper>() {

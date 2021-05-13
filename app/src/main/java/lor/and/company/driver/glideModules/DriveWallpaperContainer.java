@@ -7,7 +7,6 @@ public class DriveWallpaperContainer {
     ProgressInputStream progressInputStream = null;
     DriveWallpaperListener listener;
 
-
     public DriveWallpaperContainer(Wallpaper wallpaper, DriveWallpaperListener listener) {
         this.wallpaper = wallpaper;
         this.listener = listener;

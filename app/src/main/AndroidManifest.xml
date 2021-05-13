@@ -2,11 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="lor.and.company.driver">
 
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.SET_WALLPAPER" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="com.android.vending.BILLING" />
 
     <application
         android:allowBackup="false"
@@ -15,27 +17,42 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Driver">
-        <activity android:name=".LinkActivity"
+        <activity android:name=".ImportPresetActivity"></activity>
+
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="@string/mobileads_app_id" />
+
+        <activity
+            android:name=".LinkActivity"
             android:configChanges="orientation"
             android:screenOrientation="portrait">
             <intent-filter android:label="Driver Link Import">
                 <action android:name="android.intent.action.VIEW" />
+
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https"
-                    android:host="driv.er" />
+
+                <data
+                    android:host="driv.er"
+                    android:scheme="https" />
             </intent-filter>
             <intent-filter android:label="Driver Link Import">
                 <action android:name="android.intent.action.VIEW" />
+
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="driv.er" />
-                <data android:scheme="https" android:host="drive.google.com" />
+
+                <data
+                    android:host="driv.er"
+                    android:scheme="https" />
+                <data
+                    android:host="drive.google.com"
+                    android:scheme="https" />
             </intent-filter>
         </activity>
         <activity
             android:name=".ImportActivity"
-            android:theme="@style/Theme.AppCompat.Translucent"
             android:configChanges="orientation"
             android:screenOrientation="portrait">
             <intent-filter>
@@ -46,25 +63,36 @@
             android:name=".WallpaperViewerActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="Wallpaper Viewer"
-            android:theme="@style/Theme.Driver.Fullscreen"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Driver.Fullscreen">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".SettingsActivity"
+            android:configChanges="orientation"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
         </activity>
-        <activity android:name=".SettingsActivity"
+        <activity
+            android:name=".AddDriveFolderActivity"
             android:configChanges="orientation"
-            android:screenOrientation="portrait">
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustPan"/>
+        <activity
+            android:name=".CollectionActivity"
+            android:configChanges="orientation"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustPan">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.intent.action.GET_CONTENT" />
+                <category android:name="android.intent.category.OPENABLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
             </intent-filter>
-        </activity>
-        <activity android:name=".AddDriveFolderActivity"
-            android:configChanges="orientation"
-            android:screenOrientation="portrait"/>
-        <activity android:name=".CollectionActivity"
-            android:configChanges="orientation"
-            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -73,9 +101,18 @@
         </activity>
         <activity android:name=".GoogleSignInActivity" />
         <activity android:name=".WallpapersActivity" />
-        <service android:name=".services.WallpaperDownloaderService">
 
-        </service>
+        <service android:name=".services.WallpaperDownloaderService"></service>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths"/>
+        </provider>
     </application>
 
 </manifest>

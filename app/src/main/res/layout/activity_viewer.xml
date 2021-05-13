@@ -114,7 +114,7 @@
             android:id="@+id/constraintLayout2"
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:background="@drawable/gradient_invert"
+            android:background="@drawable/gradient_80"
             ssiv:layout_constraintEnd_toEndOf="parent"
             ssiv:layout_constraintStart_toStartOf="parent"
             ssiv:layout_constraintTop_toTopOf="parent">
@@ -124,7 +124,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="15dp"
-                android:fontFamily="sans-serif-thin"
+                android:fontFamily="@font/bold"
                 android:text="Driver"
                 android:textColor="@color/white"
                 android:textSize="18sp"
@@ -152,7 +152,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|center_horizontal"
-            android:background="@drawable/gradient"
+            android:background="@drawable/gradient_80_invert"
             android:orientation="vertical"
             android:paddingLeft="20dp"
             android:paddingTop="50dp"
@@ -276,8 +276,9 @@
             android:id="@+id/downloadContainer"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:alpha="0"
             android:background="#80000000"
-            android:visibility="gone">
+            android:visibility="visible">
 
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
@@ -297,7 +298,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:fontFamily="sans-serif-thin"
-                        android:text="Downloading Wallpaper"
+                        android:text="Fetching Wallpaper..."
                         android:textAlignment="textStart"
                         android:textColor="@color/white"
                         android:textSize="20sp" />

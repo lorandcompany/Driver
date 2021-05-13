@@ -168,7 +168,7 @@
             android:textSize="12dp" />
 
         <ProgressBar
-            android:id="@+id/progressBar3"
+            android:id="@+id/importProgress"
             style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

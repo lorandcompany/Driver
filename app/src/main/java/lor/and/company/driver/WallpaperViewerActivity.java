@@ -1,5 +1,6 @@
 package lor.and.company.driver;
 
+import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 
 import androidx.annotation.NonNull;
@@ -7,26 +8,38 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.FileProvider;
 
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.Insets;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -41,8 +54,10 @@ import com.bumptech.glide.request.transition.Transition;
 import com.davemorrissey.labs.subscaleview.ImageSource;
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 
+import java.io.File;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
+import java.util.prefs.Preferences;
 
 import lor.and.company.driver.glideModules.DriveWallpaperContainer;
 import lor.and.company.driver.glideModules.ProgressInputStream;
@@ -67,7 +82,7 @@ public class WallpaperViewerActivity extends AppCompatActivity implements DriveW
     private static final int REQUEST_CODE_DOWNLOAD_PERMISSION = 102;
 
 
-    private static final int UI_ANIMATION_DELAY = 300;
+    private static final int UI_ANIMATION_DELAY = 0;
 
     private final Handler mHideHandler = new Handler();
     private final Runnable mHidePart2Runnable = new Runnable() {
@@ -125,13 +140,48 @@ public class WallpaperViewerActivity extends AppCompatActivity implements DriveW
 
     ProgressBar previewProgress;
 
+    SharedPreferences preferences;
+
 //    Animation animation;
+
+
+    @Override
+    public void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        WindowInsets insets = this.getWindow().getDecorView().getRootWindowInsets();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            int statusBarHeight = insets.getSystemWindowInsetTop();
+            int navbarHeight = insets.getSystemWindowInsetBottom();
+        } else {
+            Rect rectangle = new Rect();
+            Window window = getWindow();
+            window.getDecorView().getWindowVisibleDisplayFrame(rectangle);
+            int statusBarHeight = rectangle.top;
+            int navbarHeight;
+            Resources resources = context.getResources();
+            int resourceId = resources.getIdentifier("navigation_bar_height", "dimen", "android");
+            if (resourceId > 0) {
+                navbarHeight = resources.getDimensionPixelSize(resourceId);
+            } else {
+                navbarHeight = 0;
+            }
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_viewer);
+
+        Window w = getWindow();
+        w.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+
+
+        this.getWindow().setStatusBarColor(Color.parseColor("#80000000"));
+        this.getWindow().setNavigationBarColor(Color.parseColor("#80000000"));
 
         context = this;
 
@@ -163,10 +213,14 @@ public class WallpaperViewerActivity extends AppCompatActivity implements DriveW
             }
         });
 
+        preferences = PreferenceManager.getDefaultSharedPreferences(context);
+
         loadWallpaper();
 
         mVisible = true;
         contentContainer = findViewById(R.id.contentContainer);
+
+        show();
     }
 
     FullProgressBar downloadProgress;
@@ -177,21 +231,39 @@ public class WallpaperViewerActivity extends AppCompatActivity implements DriveW
         LinearLayout loadingView = findViewById(R.id.loadingView);
         LinearLayout errorView = findViewById(R.id.wallErrorView);
 
+        TextView fileName = findViewById(R.id.fileName);
+        TextView fileSize = findViewById(R.id.fileSize);
+        TextView orientation = findViewById(R.id.orientation);
+
+        fileName.setText(wallpaper.getName());
+        fileSize.setText(humanReadableByteCountBin(wallpaper.getSize()));
+
+        if (wallpaper.getWidth() > wallpaper.getHeight()) {
+            orientation.setText("Landscape — " + wallpaper.getWidth() + "x" + wallpaper.getHeight());
+        } else if (wallpaper.getWidth() < wallpaper.getHeight()) {
+            orientation.setText("Portrait — " + wallpaper.getWidth() + "x" + wallpaper.getHeight());
+        } else {
+            orientation.setText("Neither (Square) — " + wallpaper.getWidth() + "x" + wallpaper.getHeight());
+        }
+
         Glide.with(context)
                 .asBitmap()
                 .load(new DriveWallpaperContainer(wallpaper, (DriveWallpaperContainer.DriveWallpaperListener) this))
                 .into(new SimpleTarget<Bitmap>() {
                     @Override
                     public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                        Animation animation = AnimationUtils.loadAnimation(context,R.anim.fade_in);
-                        animation.reset();
-                        preview.clearAnimation();
+                        if (preferences.getBoolean("animations", true)) {
+                            Animation animation = AnimationUtils.loadAnimation(context,R.anim.fade_in);
+                            animation.reset();
+                            preview.clearAnimation();
+                            preview.setImage(ImageSource.bitmap(resource));
+                            preview.startAnimation(animation);
+                        } else {
+                            preview.setImage(ImageSource.bitmap(resource));
+                        }
 
                         loadingView.setVisibility(View.GONE);
 
-                        preview.setImage(ImageSource.bitmap(resource));
-
-                        preview.startAnimation(animation);
                         preview.setMaxScale(2.0f);
                         preview.setMinScale(0.5f);
 
@@ -199,20 +271,7 @@ public class WallpaperViewerActivity extends AppCompatActivity implements DriveW
 
                         preview.resetScaleAndCenter();
 
-                        TextView fileName = findViewById(R.id.fileName);
-                        TextView fileSize = findViewById(R.id.fileSize);
-                        TextView orientation = findViewById(R.id.orientation);
 
-                        fileName.setText(wallpaper.getName());
-                        fileSize.setText(humanReadableByteCountBin(wallpaper.getSize()));
-
-                        if (resource.getWidth() > resource.getHeight()) {
-                            orientation.setText("Landscape — " + resource.getWidth() + "x" + resource.getHeight());
-                        } else if (resource.getWidth() < resource.getHeight()) {
-                            orientation.setText("Portrait — " + resource.getWidth() + "x" + resource.getHeight());
-                        } else {
-                            orientation.setText("Neither (Square) — " + resource.getWidth() + "x" + resource.getHeight());
-                        }
 
                         LinearLayout actionView = findViewById(R.id.actionView);
 
@@ -275,8 +334,17 @@ public class WallpaperViewerActivity extends AppCompatActivity implements DriveW
 
                                 downloadContainer = findViewById(R.id.downloadContainer);
                                 downloadProgress = findViewById(R.id.downloadProgress);
+                                downloadProgress.setProgress(0);
 
-                                downloadContainer.setVisibility(View.VISIBLE);
+                                if (preferences.getBoolean("animations", true)) {
+                                    Animation animation = AnimationUtils.loadAnimation(context,R.anim.fade_in);
+                                    animation.reset();
+                                    downloadContainer.clearAnimation();
+                                    downloadContainer.setAlpha(1);
+                                    downloadContainer.startAnimation(animation);
+                                } else {
+                                    downloadContainer.setAlpha(1);
+                                }
                             }
                         });
 
@@ -343,7 +411,7 @@ public class WallpaperViewerActivity extends AppCompatActivity implements DriveW
 
         WindowManager.LayoutParams attributes = getWindow().getAttributes();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
+            attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
         }
         getWindow().setAttributes(attributes);
 
@@ -400,17 +468,73 @@ public class WallpaperViewerActivity extends AppCompatActivity implements DriveW
 
     @Override
     public void onProgress(int progress) {
-        Log.d(TAG, "onProgress: " + progress);
-//        downloadProgress.setProgress(progress);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (preferences.getBoolean("animations", true)) {
+                    ObjectAnimator animation = ObjectAnimator.ofInt(downloadProgress, "progress", downloadProgress.progress, progress);
+                    animation.setDuration(250);
+                    animation.setAutoCancel(true);
+                    animation.setInterpolator(new DecelerateInterpolator());
+                    animation.start();
+                } else {
+                    downloadProgress.setProgress(progress);
+                }
+            }
+        });
     }
 
     @Override
-    public void onFinish() {
+    public void onFinish(File file) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (preferences.getBoolean("animations", true)) {
+                    Animation animation = AnimationUtils.loadAnimation(context,R.anim.fade_in);
+                    animation.reset();
+                    downloadContainer.clearAnimation();
+                    downloadContainer.setAlpha(0);
+                    downloadContainer.startAnimation(animation);
+                } else {
+                    downloadContainer.setAlpha(0);
+                }
+                downloadContainer.setOnTouchListener(null);
+            }
+        });
+
+        Intent intent = new Intent(Intent.ACTION_SET_WALLPAPER);
+        intent.addCategory("android.intent.category.DEFAULT");
+        String str = "image/*";
+//            intent.setDataAndType(Uri.fromFile(new File(context.getDataDir() + File.separator + "setAsWallpaperCache")), str);
+        Uri apkURI = FileProvider.getUriForFile(
+                context,
+                context.getApplicationContext()
+                        .getPackageName() + ".provider", file);
+        intent.setDataAndType(apkURI, str);
+        intent.putExtra("mimeType", str);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+//        start(Intent.createChooser(intent, "Set Image As:"));
+        startActivityForResult(Intent.createChooser(intent, "Set Image As:"), 999);
+    }
+
+
+
+    @Override
+    public void onFinish(String action) {
         Log.d(TAG, "onProgress: Finished");
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                downloadContainer.setVisibility(View.GONE);
+                if (preferences.getBoolean("animations", true)) {
+                    Animation animation = AnimationUtils.loadAnimation(context,R.anim.fade_in);
+                    animation.reset();
+                    downloadContainer.clearAnimation();
+                    downloadContainer.setAlpha(0);
+                    downloadContainer.startAnimation(animation);
+                } else {
+                    downloadContainer.setAlpha(0);
+                }
+                downloadContainer.setOnTouchListener(null);
                 Toast.makeText(context, "Download Finished", Toast.LENGTH_SHORT).show();
             }
         });
@@ -418,7 +542,23 @@ public class WallpaperViewerActivity extends AppCompatActivity implements DriveW
 
     @Override
     public void onError() {
-
+        Log.d(TAG, "onProgress: Finished");
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (preferences.getBoolean("animations", true)) {
+                    Animation animation = AnimationUtils.loadAnimation(context,R.anim.fade_in);
+                    animation.reset();
+                    downloadContainer.clearAnimation();
+                    downloadContainer.setAlpha(0);
+                    downloadContainer.startAnimation(animation);
+                } else {
+                    downloadContainer.setAlpha(0);
+                }
+                Toast.makeText(context, "Download Failed. Something went wrong.", Toast.LENGTH_SHORT).show();
+                downloadContainer.setOnTouchListener(null);
+            }
+        });
     }
 
     @Override
@@ -426,6 +566,10 @@ public class WallpaperViewerActivity extends AppCompatActivity implements DriveW
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQUEST_CODE_DOWNLOAD_PERMISSION) {
             if (permissions[0].equals(WRITE_EXTERNAL_STORAGE) && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                downloadContainer = findViewById(R.id.downloadContainer);
+                downloadProgress = findViewById(R.id.downloadProgress);
+                downloadProgress.setProgress(0);
+
                 action = "download";
                 Intent intent = new Intent(context, WallpaperDownloaderService.class);
                 intent.putExtra("wallpaper", wallpaper);
@@ -452,10 +596,15 @@ public class WallpaperViewerActivity extends AppCompatActivity implements DriveW
 
                 bindService(intent, connection, Context.BIND_AUTO_CREATE);
 
-                downloadContainer = findViewById(R.id.downloadContainer);
-                downloadProgress = findViewById(R.id.downloadProgress);
-
-                downloadContainer.setVisibility(View.VISIBLE);
+                if (preferences.getBoolean("animations", true)) {
+                    Animation animation = AnimationUtils.loadAnimation(context,R.anim.fade_in);
+                    animation.reset();
+                    downloadContainer.clearAnimation();
+                    downloadContainer.setAlpha(1);
+                    downloadContainer.startAnimation(animation);
+                } else {
+                    downloadContainer.setAlpha(1);
+                }
                 downloadContainer.setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -465,6 +614,14 @@ public class WallpaperViewerActivity extends AppCompatActivity implements DriveW
             } else {
                 Toast.makeText(context, "Permission is required to download. Please grant the permission.", Toast.LENGTH_SHORT).show();
             }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 999) {
+            Toast.makeText(context, "Finished.", Toast.LENGTH_SHORT).show();
         }
     }
 }

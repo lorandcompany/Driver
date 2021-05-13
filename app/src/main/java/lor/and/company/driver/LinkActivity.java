@@ -5,6 +5,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.UriMatcher;
@@ -15,6 +16,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,21 +36,6 @@ public class LinkActivity extends AppCompatActivity {
 
     private static final String TAG = "LinkActivity";
 
-    private static final UriMatcher sURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
-
-    static {
-        // https://drive.google.com/folderview?id=1Zd5Ow8zgVvnKoNCPwJ0lzJIQp0X4-DvR
-        sURIMatcher.addURI("drive.google.com", "folderview", 1);
-        // https://drive.google.com/drive/u/1/folders/1Zd5Ow8zgVvnKoNCPwJ0lzJIQp0X4-DvR
-        sURIMatcher.addURI("drive.google.com", "drive/u/#/folders/*", 2);
-        // https://drive.google.com/drive/folders/1Zd5Ow8zgVvnKoNCPwJ0lzJIQp0X4-DvR?usp=sharing
-        sURIMatcher.addURI("drive.google.com", "drive/folders/*", 2);
-        // https://drive.google.com/drive/u/1/folders/1Zd5Ow8zgVvnKoNCPwJ0lzJIQp0X4-DvR
-        sURIMatcher.addURI("drive.google.com", "drive/u/#/mobile/folders/*", 2);
-        // https://driv.er/1Zd5Ow8zgVvnKoNCPwJ0lzJIQp0X4-DvR
-        sURIMatcher.addURI("driv.er", "*", 2);
-    }
-
     Context context;
     Uri driveLink;
     LinearLayout loadingView;
@@ -66,7 +53,7 @@ public class LinkActivity extends AppCompatActivity {
 
         driveLink = getIntent().getData();
 
-        if (sURIMatcher.match(driveLink) > 0) {
+        if (DriveHelper.sURIMatcher.match(driveLink) > 0) {
             new AddDriveLinkTask().execute();
         } else {
             Toast.makeText(this, "This is not a valid Driver link.", Toast.LENGTH_SHORT).show();
@@ -85,18 +72,7 @@ public class LinkActivity extends AppCompatActivity {
             try {
                 service = DriveHelper.getDrive(context);
 
-                switch (sURIMatcher.match(driveLink)) {
-                    case 1: {
-                        folderId = driveLink.getQueryParameter("id");
-                        break;
-                    }
-                    case 2: {
-                        folderId = driveLink.getLastPathSegment();
-                        break;
-                    }
-                    default:
-                        throw new Exception("Invalid Drive Link");
-                }
+                folderId = DriveHelper.getId(driveLink.toString());
 
                 Log.d(TAG, "doInBackground: " + folderId);
 
@@ -115,26 +91,7 @@ public class LinkActivity extends AppCompatActivity {
                 authorStr = folderDetails.getOwners().get(0).getDisplayName();
                 return files;
             } catch (IOException e) {
-                reason = e.getMessage();
-                if (reason.contains("authError")) {
-                    reason = "You removed Driver's permission to access your Google Drive.";
-                } else if (reason.contains("usageLimits")) {
-                    reason = "You're using this app TOO MUCH. Try again tomorrow.";
-                }else if (reason.contains("rateLimitExceeded") && reason.contains("403")) {
-                    reason = "This app has become too popular and is hitting its limit. Try again tomorrow";
-                }else if (reason.contains("insufficientFilePermissions")) {
-                    reason = "You don't have permission to view the folder. Ask the folder owner to add your email to the list of shared people.";
-                }else if (reason.contains("notFound")) {
-                    reason = "This Drive folder doesn't exist. Try double checking your link.";
-                }else if (reason.contains("rateLimitExceeded") && reason.contains("429")) {
-                    reason = "You're doing too much in such a small amount of time. Try again later.";
-                }else if (reason.contains("backendError")) {
-                    reason = "Google Drive had a meltdown. Try again.";
-                } else if (reason.contains("Unable to resolve")) {
-                    reason = "You're not connected to the internet. Please check your internet connection.";
-                } else {
-                    reason = e.getMessage();
-                }
+                reason = DriveHelper.getError(e.getMessage());
                 return null;
             } catch (Exception f) {
                 reason = f.getMessage();
@@ -161,6 +118,16 @@ public class LinkActivity extends AppCompatActivity {
                 PreviewRecyclerAdapter recyclerView = new PreviewRecyclerAdapter(context, files);
                 preview.setAdapter(recyclerView);
                 Button import2 = findViewById(R.id.importFolder);
+
+                Button cancel = findViewById(R.id.back);
+                cancel.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        Log.d(TAG, "onClick: Clicked back");
+                        ((Activity) context).finish();
+                    }
+                });
+
                 DBHelper.CollectionsDB db = new DBHelper.CollectionsDB(context);
                 import2.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -196,15 +163,6 @@ public class LinkActivity extends AppCompatActivity {
                                 super.onCancelled();
                             }
                         }.execute();
-                    }
-                });
-                Button cancel = findViewById(R.id.back);
-                cancel.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        Intent intent = new Intent(context, CollectionActivity.class);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                        startActivity(intent);
                     }
                 });
             } else {

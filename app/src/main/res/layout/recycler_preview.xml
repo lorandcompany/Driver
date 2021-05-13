@@ -9,12 +9,13 @@
     android:padding="4dp">
 
     <androidx.cardview.widget.CardView
+        app:cardBackgroundColor="@color/bg"
         android:id="@+id/previewCardView"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:animateLayoutChanges="true"
         app:cardCornerRadius="4dp"
-        app:cardPreventCornerOverlap="true"
+        app:cardPreventCornerOverlap="false"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -32,8 +33,7 @@
             android:id="@+id/heroImage"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:adjustViewBounds="true"
-            android:scaleType="centerInside" />
+            android:adjustViewBounds="true"/>
     </androidx.cardview.widget.CardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

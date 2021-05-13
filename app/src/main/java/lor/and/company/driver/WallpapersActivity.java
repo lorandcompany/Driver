@@ -2,8 +2,13 @@ package lor.and.company.driver;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.util.Log;
+import android.util.TypedValue;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -16,9 +21,16 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.initialization.InitializationStatus;
+import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
+
 import java.io.IOException;
 import java.util.ArrayList;
 
+import lor.and.company.driver.classes.FadingEdgeRecyclerView;
 import lor.and.company.driver.helpers.DBHelper;
 import lor.and.company.driver.adapters.WallpaperRecyclerAdapter;
 import lor.and.company.driver.models.Collection;
@@ -43,6 +55,21 @@ WallpapersActivity extends AppCompatActivity implements RefresherListener {
 
         context = this;
 
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+        if (!preferences.getBoolean("adfree", false)) {
+            AdView adView = findViewById(R.id.adView2);
+            adView.setVisibility(View.VISIBLE);
+
+            MobileAds.initialize(this, new OnInitializationCompleteListener() {
+                @Override
+                public void onInitializationComplete(InitializationStatus initializationStatus) {
+                }
+            });
+            AdRequest adRequest = new AdRequest.Builder().build();
+            adView.loadAd(adRequest);
+        }
+
         collection = getIntent().getExtras().getParcelable("collection");
 
         wallpaperDB = new DBHelper.WallpaperDB(context);
@@ -61,7 +88,7 @@ WallpapersActivity extends AppCompatActivity implements RefresherListener {
 
         title.setText(collection.getName());
 
-        RecyclerView wallpaperView = findViewById(R.id.wallpaperRecyclerView);
+        FadingEdgeRecyclerView wallpaperView = findViewById(R.id.wallpaperRecyclerView);
         GridLayoutManager gridLayoutManager = new GridLayoutManager(context, 2);
         wallpaperView.setLayoutManager(gridLayoutManager);
         WallpaperRecyclerAdapter adapter = new WallpaperRecyclerAdapter(context, collection);
@@ -89,7 +116,13 @@ WallpapersActivity extends AppCompatActivity implements RefresherListener {
                         try {
                             new DBHelper.CollectionsDB(context).updateCollection(collection, (RefresherListener) context);
                         } catch (IOException e) {
-                            Toast.makeText(context, "Loading failed. Please try again.", Toast.LENGTH_SHORT).show();
+                            e.printStackTrace();
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(context, "Loading failed. Please try again.", Toast.LENGTH_SHORT).show();
+                                }
+                            });
                             refresher.setRefreshing(false);
                         }
                         return null;

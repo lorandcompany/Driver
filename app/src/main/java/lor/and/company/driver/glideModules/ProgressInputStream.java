@@ -29,14 +29,6 @@ public class ProgressInputStream extends InputStream {
         return wrappedInputStream.read();
     }
 
-    @Override
-    public int read(byte[] b) throws IOException {
-        int retVal = wrappedInputStream.read(b);
-        counter += retVal;
-        check();
-        return retVal;
-    }
-
     int checkCount = 0;
 
     @Override
@@ -55,7 +47,7 @@ public class ProgressInputStream extends InputStream {
 
     private void check() {
         int percent = (int) ( counter * 100 / size );
-        if (percent - lastPercent >= 1) {
+        if (percent - lastPercent >= 10) {
             lastPercent = percent;
             if (listener != null)
                 listener.onProgress(percent, tag);

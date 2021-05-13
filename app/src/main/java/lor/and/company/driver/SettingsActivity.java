@@ -2,23 +2,36 @@ package lor.and.company.driver;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 
+import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.billingclient.api.BillingClient;
+import com.android.billingclient.api.BillingClientStateListener;
+import com.android.billingclient.api.BillingFlowParams;
+import com.android.billingclient.api.BillingResult;
+import com.android.billingclient.api.Purchase;
+import com.android.billingclient.api.PurchasesUpdatedListener;
+import com.android.billingclient.api.SkuDetails;
+import com.android.billingclient.api.SkuDetailsParams;
+import com.android.billingclient.api.SkuDetailsResponseListener;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -30,6 +43,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.StringJoiner;
 
 import lor.and.company.driver.helpers.DBHelper;
@@ -42,12 +56,17 @@ public class SettingsActivity extends AppCompatActivity {
     LinearLayout signedOutView, signedInView;
     TextView nameView, emailView;
 
-    Button signInOut, importDrive, exportDrive, cache, enableAnimations, disableAnimations;
+    Button signInOut, importDrive, exportDrive, buyAds, restorePurchases;
+    Switch animations;
 
-    SharedPreferences prefs;
+    SharedPreferences preferences;
 
-    int CREATE_BACKUP = 1;
-    int RESTORE_BACKUP = 2;
+    LinearLayout adLoadingView;
+    LinearLayout adBuyView;
+    LinearLayout adErrorView;
+
+    public static final int CREATE_BACKUP = 1;
+    public static final int RESTORE_BACKUP = 2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,36 +89,74 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
+        preferences = PreferenceManager.getDefaultSharedPreferences(context);
+
         signInOut = findViewById(R.id.signInOut);
         importDrive = findViewById(R.id.importDrive);
         exportDrive = findViewById(R.id.exportDrive);
-        enableAnimations = findViewById(R.id.enableAnimations);
-        disableAnimations = findViewById(R.id.disableAnimations);
-        cache = findViewById(R.id.cache);
+        animations = findViewById(R.id.animationToggle);
+        buyAds = findViewById(R.id.buyAds);
+        restorePurchases = findViewById(R.id.restorePurchases);
+
+        adLoadingView = findViewById(R.id.adLoadingContainer);
+        adBuyView = findViewById(R.id.adBuyRestoreContainer);
+        adErrorView = findViewById(R.id.adFailedContainer);
 
         checkGoogleAccount();
+        connectToBilling();
 
-        Context context;
-
-        prefs = PreferenceManager.getDefaultSharedPreferences(this);
-
-        enableAnimations.setOnClickListener(new View.OnClickListener() {
+        buyAds.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                prefs.edit().putBoolean("animations", true).apply();
-                checkAnimations();
+            public void onClick(View v) {
+                Log.d(TAG, "onClick: Clicked Remove Ads");
+                List<String> skuList = new ArrayList<>();
+                skuList.add("driver_remove_ads");
+                SkuDetailsParams.Builder params = SkuDetailsParams.newBuilder();
+                params.setSkusList(skuList).setType(BillingClient.SkuType.INAPP);
+                billingClient.querySkuDetailsAsync(params.build(),
+                        new SkuDetailsResponseListener() {
+                            @Override
+                            public void onSkuDetailsResponse(BillingResult billingResult,
+                                                             List<SkuDetails> skuDetailsList) {
+                                if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
+                                    Log.d(TAG, "onSkuDetailsResponse: DOes it even go here?");
+                                    for (SkuDetails skuDetails: skuDetailsList) {
+                                        if (skuDetails.getSku().equals("driver_remove_ads")) {
+                                            Log.d(TAG, "onSkuDetailsResponse: It does!");
+                                            BillingFlowParams billingFlowParams = BillingFlowParams.newBuilder()
+                                                    .setSkuDetails(skuDetails)
+                                                    .build();
+                                            int responseCode = billingClient.launchBillingFlow((Activity) context, billingFlowParams).getResponseCode();
+                                        }
+                                    }
+                                } else {
+                                    Toast.makeText(context, "Failed to open in-app billing. Check your internet connection.", Toast.LENGTH_SHORT).show();
+                                }
+                                Log.d(TAG, "onSkuDetailsResponse: " + billingResult.getResponseCode());
+                            }
+                        });
             }
         });
 
-        disableAnimations.setOnClickListener(new View.OnClickListener() {
+        restorePurchases.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                prefs.edit().putBoolean("animations", false).apply();
-                checkAnimations();
+            public void onClick(View v) {
+                Purchase.PurchasesResult purchasesResult = billingClient.queryPurchases(BillingClient.SkuType.INAPP);
+                if (purchasesResult.getPurchasesList().size() == 0) {
+                    Toast.makeText(context, "A valid purchase has not been found.", Toast.LENGTH_SHORT).show();
+                }
+                handlePurchase(purchasesResult.getPurchasesList());
             }
         });
 
-        checkAnimations();
+        animations.setChecked(preferences.getBoolean("animations", true));
+
+        animations.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                preferences.edit().putBoolean("animations", isChecked).apply();
+            }
+        });
 
         exportDrive.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -122,16 +179,111 @@ public class SettingsActivity extends AppCompatActivity {
                 startActivityForResult(intent, RESTORE_BACKUP);
             }
         });
+
+        CardView compact = findViewById(R.id.compact);
+        RadioButton compactButton = findViewById(R.id.compactRadio);
+        CardView immersive = findViewById(R.id.immersive);
+        RadioButton immersiveButton = findViewById(R.id.immersiveRadio);
+
+        View.OnClickListener compactListener = new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                preferences.edit().putString("layout", "compact").apply();
+                compactButton.setChecked(true);
+                immersiveButton.setChecked(false);
+                setResult(RESULT_OK);
+            }
+        };
+
+        View.OnClickListener immersiveListener = new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                preferences.edit().putString("layout", "immersive").apply();
+                compactButton.setChecked(false);
+                immersiveButton.setChecked(true);
+                setResult(RESULT_OK);
+            }
+        };
+
+        compact.setOnClickListener(compactListener);
+        compactButton.setOnClickListener(compactListener);
+        immersive.setOnClickListener(immersiveListener);
+        immersiveButton.setOnClickListener(immersiveListener);
+
+        compactButton.setChecked(!preferences.getString("layout", "compact").equals("immersive"));
+        immersiveButton.setChecked(preferences.getString("layout", "compact").equals("immersive"));
     }
 
-    public void checkAnimations(){
-        if (prefs.getBoolean("animations", true)) {
-            enableAnimations.setVisibility(View.GONE);
-            disableAnimations.setVisibility(View.VISIBLE);
-        } else {
-            enableAnimations.setVisibility(View.VISIBLE);
-            disableAnimations.setVisibility(View.GONE);
+    private final PurchasesUpdatedListener purchasesUpdatedListener = new PurchasesUpdatedListener() {
+        @Override
+        public void onPurchasesUpdated(BillingResult billingResult, List<Purchase> purchases) {
+            if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK
+                    && purchases != null) {
+                handlePurchase(purchases);
+            } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.USER_CANCELED) {
+                Toast.makeText(context, "Cancelled purchase.", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(context, "Something went wrong. Please try again.", Toast.LENGTH_SHORT).show();
+            }
         }
+    };
+
+    private void handlePurchase(List<Purchase> purchases) {
+        if (purchases.size() == 0) {
+        } else {
+            boolean seen = false;
+            for (Purchase purchase: purchases) {
+                if (purchase.getSku().equals("driver_remove_ads")) {
+                    preferences.edit().putBoolean("adfree", true).apply();
+                    seen = true;
+                    break;
+                }
+            }
+            if (!seen) {
+                Toast.makeText(context, "A valid purchase has not been found.", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(context, "Successfully removed ads! Thank you for your support!", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private BillingClient billingClient;
+
+    private void connectToBilling() {
+        billingClient = BillingClient.newBuilder(context)
+                .setListener(purchasesUpdatedListener)
+                .enablePendingPurchases()
+                .build();
+
+        billingClient.startConnection(new BillingClientStateListener() {
+            @Override
+            public void onBillingSetupFinished(BillingResult billingResult) {
+                if (billingResult.getResponseCode() ==  BillingClient.BillingResponseCode.OK) {
+                    Log.d(TAG, "onBillingSetupFinished: Connected to Google Play");
+                    adLoadingView.setVisibility(View.GONE);
+                    if (!preferences.getBoolean("adfree", false)) {
+                        checkPurchases();
+                    }
+                    adBuyView.setVisibility(View.VISIBLE);
+                    adErrorView.setVisibility(View.GONE);
+                } else {
+                    adBuyView.setVisibility(View.GONE);
+                    adErrorView.setVisibility(View.VISIBLE);
+                }
+            }
+
+            @Override
+            public void onBillingServiceDisconnected() {
+                adLoadingView.setVisibility(View.GONE);
+                adBuyView.setVisibility(View.GONE);
+                adErrorView.setVisibility(View.VISIBLE);
+            }
+        });
+    }
+
+    private void checkPurchases() {
+        List<Purchase> purchases = billingClient.queryPurchases(BillingClient.SkuType.INAPP).getPurchasesList();
+        handlePurchase(purchases);
     }
 
     public void checkGoogleAccount(){
@@ -187,7 +339,12 @@ public class SettingsActivity extends AppCompatActivity {
             StringJoiner stringJoiner = new StringJoiner("\r\n");
             ArrayList<Collection> collections = db.getCollections();
             for (Collection collection: collections) {
-                stringJoiner.add(collection.getId());
+                StringJoiner row = new StringJoiner(":::::");
+                row.add(collection.getId());
+                row.add(collection.getName());
+                row.add(collection.getOwner());
+                Log.d(TAG, "createBackup: " + row.toString());
+                stringJoiner.add(row.toString());
             }
             outputStream.write(stringJoiner.toString().getBytes());
             outputStream.flush();
@@ -206,8 +363,7 @@ public class SettingsActivity extends AppCompatActivity {
                 GoogleSignInAccount googleSignInAccount = GoogleSignIn.getLastSignedInAccount(context);
 
                 Log.d(TAG, "Signed in as " + googleSignInAccount.getEmail());
-                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-                sharedPreferences.edit().putString("email", googleSignInAccount.getEmail())
+                preferences.edit().putString("email", googleSignInAccount.getEmail())
                         .putString("token", googleSignInAccount.getServerAuthCode())
                         .putString("userID", googleSignInAccount.getId()).apply();
             } else {
